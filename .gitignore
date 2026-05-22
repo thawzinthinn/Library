@@ -1,0 +1,27 @@
+# Environment files
+.env
+.env.*
+
+# Composer dependencies
+/vendor/
+
+# Logs / cache
+*.log
+
+# OS / system files
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+*.tmp
+
+# IDE settings (optional)
+.vscode/
+.idea/
+
+# PHPStorm / editor configs
+*.iml
+
+# XAMPP / local server noise
+phpinfo.php
