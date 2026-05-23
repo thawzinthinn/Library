@@ -1,5 +1,7 @@
 <?php
 
+namespace App\Controller\Api;
+
 class ApiDetailsController
 {
     private CatalogService $catalogService;

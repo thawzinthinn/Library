@@ -1,51 +1,63 @@
-
 <?php
+
 /**
- * Main application entry point.
- * Initializes dependencies, services, and application routing.
+ * Application Entry Point
  */
+
+define('BASE_PATH', dirname(__DIR__));
+
+require_once BASE_PATH . '/vendor/autoload.php';
+
+use Dotenv\Dotenv;
+
+use App\inc\Database;
+
+use App\Repository\CatalogRepository;
+use App\Repository\FormatRepository;
+
+use App\Service\CatalogService;
+use App\Service\FormatService;
+
 /*
-//Report simple running errors
-error_reporting(E_ALL);
-//Make sure they are on screen
-ini_set('display_errors',1);
-//HTML formatted errors
-ini_set('html_errors',1);
-        OR
-use @ in front of error
+|--------------------------------------------------------------------------
+| LOAD ENV
+|--------------------------------------------------------------------------
 */
-define('BASE_PATH', dirname(__DIR__));// parent directory path.
 
-require_once BASE_PATH . '/vendor/autoload.php'; // IS A folder created by composer
-require_once BASE_PATH . '/inc/Database.php';
-require_once BASE_PATH . '/inc/CustomPath.php';
-require_once BASE_PATH . '/Controller/Api/ApiCatalogController.php';
-require_once BASE_PATH . '/Controller/Api/ApiDetailsController.php';
-require_once BASE_PATH . '/Controller/Api/ApiSuggestController.php';
+$dotenv = Dotenv::createImmutable(BASE_PATH);
+$dotenv->load();
 
-use Dotenv\Dotenv; //Import Dotenv class
-$dotenv = Dotenv::createImmutable(dirname(__DIR__)); // create read only// encapsulation
-$dotenv->load(); //  load .env variable in php
+/*
+|--------------------------------------------------------------------------
+| DATABASE CONNECTION
+|--------------------------------------------------------------------------
+*/
 
-/*BUILD SHARED OBJECTS*/
+$db = Database::getConnection();
 
-$db = Database::getConnection();// encapsulation
+/*
+|--------------------------------------------------------------------------
+| REPOSITORIES
+|--------------------------------------------------------------------------
+*/
 
-/* Repositories */
-$catalogRepo = new CatalogRepository($db); // dependancy invertion
+$catalogRepo = new CatalogRepository($db);
 $formatRepo  = new FormatRepository($db);
 
-/* Services */
-$catalogService = new CatalogService($catalogRepo); 
-// CatalogService
-    // ↓
-//CatalogRepository
-   // ↓
-// Database
-//service depends on the repository. “Give CatalogRepository to CatalogService.”
+/*
+|--------------------------------------------------------------------------
+| SERVICES
+|--------------------------------------------------------------------------
+*/
+
+$catalogService = new CatalogService($catalogRepo);
 $formatService  = new FormatService($formatRepo);
 
-/* ROUTING */
+/*
+|--------------------------------------------------------------------------
+| ROUTING
+|--------------------------------------------------------------------------
+*/
 
 $isApi = isset($_GET['api']);
 
@@ -57,4 +69,3 @@ if ($isApi) {
 
     require BASE_PATH . '/routes/web.php';
 }
-

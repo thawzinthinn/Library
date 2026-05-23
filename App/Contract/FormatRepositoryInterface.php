@@ -4,6 +4,7 @@
  * Defines methods for retrieving format, category,
  * and genre data from the data source.
  */
+namespace App\Contract;
 
 interface FormatRepositoryInterface
 {

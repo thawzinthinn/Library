@@ -1,4 +1,7 @@
 <?php
+use App\Controller\Api\ApiCatalogController;
+use App\Controller\Api\ApiDetailsController;
+use App\Controller\Api\ApiSuggestController;
 
 header('Content-Type: application/json');
 

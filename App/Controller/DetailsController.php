@@ -4,7 +4,9 @@
  * Handles displaying detailed information
  * for a single catalog item.
  */
+namespace App\Controller;
 
+use App\Service\CatalogService;
 class DetailsController
 {
     private CatalogService $catalogService;

@@ -1,5 +1,7 @@
 <?php
 
+namespace App\Controller\Api;
+
 use PHPMailer\PHPMailer\PHPMailer;
 
 class ApiSuggestController

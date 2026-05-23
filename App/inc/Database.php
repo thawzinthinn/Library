@@ -1,4 +1,8 @@
 <?php
+
+namespace App\inc;
+
+use PDO;
 //System Path(for php)
 if (!defined('BASE_PATH')) {
     define('BASE_PATH', dirname(__DIR__));
@@ -18,6 +22,7 @@ class Database
 
     public static function getConnection(): PDO
     {
+        // echo "ok";
         if (self::$connection === null) {
             self::$connection = new PDO(
                 "mysql:host=" . self::$host . ";dbname=" . self::$dbname . ";charset=utf8",

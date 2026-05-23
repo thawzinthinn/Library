@@ -4,14 +4,14 @@
  * Defines methods for retrieving catalog data
  * from the data source.
  */
-
+namespace App\Contract;
 interface CatalogRepositoryInterface
 {
     // Get total catalog item count
     public function getCatalogCount($category = null, $search = null);
 
     // Get complete catalog list
-    public function getFullCatalog($limit = null, $offset = 0);
+    // public function getFullCatalog($limit = null, $offset = 0);
 
     // Get catalog items by category
     public function getCategoryCatalog($category, $limit = null, $offset = 0);
@@ -23,5 +23,5 @@ interface CatalogRepositoryInterface
     public function getRandomCatalog();
 
     // Get a single catalog item by ID
-    public function getSingleItem($id);
+    // public function getSingleItem($id);
 }

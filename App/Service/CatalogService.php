@@ -1,10 +1,17 @@
- <?php
+<?php
 
 /*
  * Handles catalog business logic and orchestration.
  * Does NOT directly talk to DB.
  * Only uses Repository.
  */
+namespace App\Service;
+
+use App\Contract\CatalogRepositoryInterface;
+
+use App\Repository\CatalogRepository;
+
+use App\inc\Database;
 class CatalogService
 {
     private CatalogRepositoryInterface $repo;
@@ -142,7 +149,7 @@ class CatalogService
             return $this->repo->getCategoryCatalog($section, $limit, $offset);
         }
 
-        return $this->repo->getFullCatalog($limit, $offset);
+        return $this->repo->findAll($limit, $offset);
     }
 
     /* =========================================================
@@ -173,6 +180,6 @@ class CatalogService
      * ========================================================= */
     public function getSingleItem(int $id): array
     {
-        return $this->repo->getSingleItem($id);
+        return $this->repo->findById($id);
     }
 }

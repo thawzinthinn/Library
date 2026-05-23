@@ -1,11 +1,9 @@
 <?php
 
-require_once BASE_PATH . '/Model/Service/CatalogService.php';
+namespace App\Controller;
 
-/*
- * Thin Controller:
- * Only handles HTTP request → passes to service → loads view
- */
+use App\Service\CatalogService;
+
 class CatalogController
 {
     private CatalogService $catalogService;
@@ -15,27 +13,19 @@ class CatalogController
         $this->catalogService = $catalogService;
     }
 
-    /*
-     * Homepage
-     */
     public function home(): void
     {
         $data = $this->catalogService->getHomePageData();
 
-        // Extract variables for view
         extract($data);
 
         require BASE_PATH . '/view/home.php';
     }
 
-    /**
-     * Catalog page (FULL LOGIC MOVED TO SERVICE)
-     */
     public function index(): void
     {
         $data = $this->catalogService->getCatalogPage($_GET);
 
-        // Make variables available in view
         extract($data);
 
         require BASE_PATH . '/view/catalog.php';

@@ -1,4 +1,7 @@
 <?php
+use App\Controller\CatalogController;
+use App\Controller\DetailsController;
+use App\Controller\SuggestController;
 
 $page = $_GET['page'] ?? 'home';
 

@@ -1,4 +1,7 @@
-<?php require BASE_PATH . '/view/layout/header.php'; ?>
+<?php
+use View\ItemView;
+
+ require BASE_PATH . '/view/layout/header.php'; ?>
 
 <div class="section catalog page">
   <div class="wrapper">
