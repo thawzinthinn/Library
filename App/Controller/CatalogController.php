@@ -4,7 +4,7 @@ namespace App\Controller;
 
 use App\Service\CatalogService;
 
-class CatalogController
+class CatalogController extends BaseController
 {
     private CatalogService $catalogService;
 
@@ -16,18 +16,14 @@ class CatalogController
     public function home(): void
     {
         $data = $this->catalogService->getHomePageData();
-
-        extract($data);
-
-        require BASE_PATH . '/view/home.php';
+        // var_dump($data);
+        $this->view('home', $data);
     }
 
     public function index(): void
     {
         $data = $this->catalogService->getCatalogPage($_GET);
-
-        extract($data);
-
-        require BASE_PATH . '/view/catalog.php';
+        // var_dump($data);
+        $this->view('catalog', $data);
     }
 }

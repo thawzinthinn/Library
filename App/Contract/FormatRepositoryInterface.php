@@ -6,7 +6,7 @@
  */
 namespace App\Contract;
 
-interface FormatRepositoryInterface
+interface FormatRepositoryInterface extends BaseInterface
 {
     // Get format dropdown list
     public function get_format_drop_down($category = null);

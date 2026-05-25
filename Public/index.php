@@ -4,6 +4,8 @@
  * Application Entry Point
  */
 
+session_start();
+
 define('BASE_PATH', dirname(__DIR__));
 
 require_once BASE_PATH . '/vendor/autoload.php';
@@ -42,7 +44,7 @@ $db = Database::getConnection();
 */
 
 $catalogRepo = new CatalogRepository($db);
-$formatRepo  = new FormatRepository($db);
+$formatRepo = new FormatRepository($db);
 
 /*
 |--------------------------------------------------------------------------
@@ -51,7 +53,7 @@ $formatRepo  = new FormatRepository($db);
 */
 
 $catalogService = new CatalogService($catalogRepo);
-$formatService  = new FormatService($formatRepo);
+$formatService = new FormatService($formatRepo);
 
 /*
 |--------------------------------------------------------------------------

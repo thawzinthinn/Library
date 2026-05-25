@@ -1,146 +1,104 @@
 <?php
 
-/**
- * Handles media suggestion requests,
- * form validation, and email sending.
- */
 namespace App\Controller;
 
 use App\Service\FormatService;
-
-// require_once __DIR__ . '/../vendor/autoload.php';
-
-use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\PHPMailer;
 
-class SuggestController
+class SuggestController extends BaseController
 {
     private FormatService $formatService;
 
     public function __construct(FormatService $formatService)
     {
-        // Inject format service dependency
         $this->formatService = $formatService;
     }
 
-    // Display suggestion form page
-    public function index()
+    public function index(): void
     {
-        $pageTitle = "Suggest a media item";
-        $section   = "suggest";
-        $hideSearch = true;
+        $data = [
+            'pageTitle' => "Suggest a media item",
+            'section' => "suggest",
+            'hideSearch' => true,
+            'error_message' => null,
+        ];
 
-        // Default form values
-        $name = $email = $category = $title = $format = $genre = $year = $details = null;
-        $error_message = null;
-
-        // Handle form submission
         if ($_SERVER["REQUEST_METHOD"] === "POST") {
-            $result = $this->handleForm();
+            $formResult = $this->handleForm();
 
-            // Extract returned form data
-            extract($result);
+            $data = array_merge($data, $formResult);
         }
 
-        // Load dropdown data
-        $categories = $this->formatService->category_drop_down();
-        $formats    = $this->formatService->format_array();
-        $genres     = $this->formatService->genres_array();
+        $data['categories'] = $this->formatService->category_drop_down();
+        $data['formats']    = $this->formatService->format_array();
+        $data['genres']     = $this->formatService->genres_array();
 
-        require BASE_PATH . '/view/suggest.php';
+        $this->view('suggest', $data);
     }
 
-    // Process and validate form submission
     private function handleForm(): array
     {
         $data = [
-            'name' => null,
-            'email' => null,
-            'category' => null,
-            'title' => null,
-            'format' => null,
-            'genre' => null,
-            'year' => null,
-            'details' => null,
             'error_message' => null
         ];
 
-        // Sanitize user input
-        $data['name']     = trim(filter_input(INPUT_POST, "name", FILTER_SANITIZE_SPECIAL_CHARS));
-        $data['email']    = trim(filter_input(INPUT_POST, "email", FILTER_SANITIZE_EMAIL));
-        $data['category'] = trim(filter_input(INPUT_POST, "category", FILTER_SANITIZE_SPECIAL_CHARS));
-        $data['title']    = trim(filter_input(INPUT_POST, "title", FILTER_SANITIZE_SPECIAL_CHARS));
-        $data['format']   = trim(filter_input(INPUT_POST, "format", FILTER_SANITIZE_SPECIAL_CHARS));
-        $data['genre']    = trim(filter_input(INPUT_POST, "genre", FILTER_SANITIZE_SPECIAL_CHARS));
-        $data['year']     = trim(filter_input(INPUT_POST, "year", FILTER_SANITIZE_NUMBER_INT));
-        $data['details']  = trim(filter_input(INPUT_POST, "details", FILTER_SANITIZE_SPECIAL_CHARS));
+        $name = trim($this->post('name'));
+        $email = trim($this->post('email'));
+        $category = trim($this->post('category'));
+        $title = trim($this->post('title'));
 
-        // Validate required fields
-        if (
-            empty($data['name']) ||
-            empty($data['email']) ||
-            empty($data['category']) ||
-            empty($data['title'])
-        ) {
+        if (!$name || !$email || !$category || !$title) {
             $data['error_message'] =
-                "Please fill in the required fields: Name, Email, Category and Title";
-
+                "Please fill required fields: Name, Email, Category, Title";
             return $data;
         }
 
-        // Honeypot spam protection
         if (!empty($_POST['address'])) {
             $data['error_message'] = "Bad form input";
             return $data;
         }
 
-        // Validate email format
-        if (!PHPMailer::validateAddress($data['email'])) {
+        if (!PHPMailer::validateAddress($email)) {
             $data['error_message'] = "Invalid email address";
             return $data;
         }
 
-        /* SEND EMAIL */
-
-        // Build email message body
-        $email_body  = "Name: {$data['name']}\n";
-        $email_body .= "Email: {$data['email']}\n\n";
-        $email_body .= "Category: {$data['category']}\n";
-        $email_body .= "Title: {$data['title']}\n";
-        $email_body .= "Format: {$data['format']}\n";
-        $email_body .= "Genre: {$data['genre']}\n";
-        $email_body .= "Year: {$data['year']}\n";
-        $email_body .= "Details:\n{$data['details']}\n";
-
-        // Configure PHPMailer
         $mail = new PHPMailer(true);
 
-        $mail->isSMTP();
-        $mail->Host = $_ENV['MAIL_HOST'];
-        $mail->Port = $_ENV['MAIL_PORT'];
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-        $mail->SMTPAuth   = true;
+        try {
+            if (!empty($_ENV['MAIL_HOST']) && !empty($_ENV['MAIL_PORT'])) {
+                $mail->isSMTP();
+                $mail->Host = $_ENV['MAIL_HOST'];
+                $mail->Port = $_ENV['MAIL_PORT'];
+                $mail->SMTPAuth = true;
+                $mail->Username = $_ENV['MAIL_USERNAME'];
+                $mail->Password = $_ENV['MAIL_PASSWORD'];
 
-        $mail->Username = $_ENV['MAIL_USERNAME'];
-        $mail->Password = $_ENV['MAIL_PASSWORD'];
+                if ($_ENV['MAIL_PORT'] === '465') {
+                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+                } else {
+                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                }
+            } else {
+                $mail->isMail();
+            }
 
-        // Set sender and receiver
-        $mail->setFrom($_ENV['MAIL_FROM_EMAIL'], $_ENV['MAIL_FROM_NAME']);
-        $mail->addReplyTo($data['email'], $data['name']);
-        $mail->addAddress($_ENV['MAIL_FROM_EMAIL']);
+            $mail->setFrom($_ENV['MAIL_FROM_EMAIL'], $_ENV['MAIL_FROM_NAME']);
+            $mail->addReplyTo($email, $name);
+            $mail->addAddress($_ENV['MAIL_FROM_EMAIL']);
 
-        // Set email content
-        $mail->Subject = 'Library Suggestion from: ' . $data['name'];
-        $mail->Body    = $email_body;
+            $mail->Subject = "Library Suggestion from: $name";
+            $mail->Body = "Suggestion received from $name";
 
-        // Send email and redirect on success
-        if ($mail->send()) {
-            header("Location: index.php?page=suggest&status=thanks");
-            exit;
+            if ($mail->send()) {
+                $this->redirect("index.php?page=suggest&status=thanks");
+            }
+
+            $data['error_message'] = $mail->ErrorInfo;
+        } catch (Exception $e) {
+            $data['error_message'] = $e->getMessage();
         }
-
-        // Return mail error if sending fails
-        $data['error_message'] = 'Mailer Error: ' . $mail->ErrorInfo;
 
         return $data;
     }

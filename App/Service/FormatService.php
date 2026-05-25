@@ -1,45 +1,30 @@
 <?php
 
-/**
- * Handles format-related business logic and manages
- * communication between controllers and repositories.
- */
 namespace App\Service;
 
 use App\Contract\FormatRepositoryInterface;
-
 use App\Repository\FormatRepository;
 
-use App\inc\Database;
-class FormatService
+class FormatService extends BaseService
 {
     private FormatRepositoryInterface $repo;
 
     public function __construct(?FormatRepositoryInterface $repo = null)
     {
-        // Create default repository if none is provided
-        if ($repo === null) {
-            $db = Database::getConnection();
-            $repo = new FormatRepository($db);
-        }
-
-        $this->repo = $repo;
+        $this->repo = $repo ?? new FormatRepository($this->db());
     }
 
-    // Get format dropdown data
-    function format_array($category = null)
+    public function format_array($category = null): array
     {
         return $this->repo->get_format_drop_down($category);
     }
 
-    // Get category dropdown data
-    function category_drop_down()
+    public function category_drop_down(): array
     {
         return $this->repo->get_category_drop_down();
     }
 
-    // Get genres dropdown data
-    function genres_array($category = null)
+    public function genres_array($category = null): array
     {
         return $this->repo->get_genres_drop_down($category);
     }

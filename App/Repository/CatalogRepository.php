@@ -11,40 +11,16 @@ use App\Contract\CatalogRepositoryInterface;
 use PDO;
 class CatalogRepository extends BaseRepository implements CatalogRepositoryInterface
 {
+
     protected string $table = 'view_catalog';
 
     protected string $primaryKey = 'media_id';
-    
 
-    // Get total catalog item count
-    function getCatalogCount($category = null, $search = null)
-    {
-        $search = !empty($search) ? $search : null;
-        $category = !empty($category) ? $category : null;
+    protected ?string $countProcedure = 'sp_search_catalog_count';
 
-        $result = $this->db->prepare(" CALL sp_search_catalog_count (:search , :category)");
+    protected ?string $getByIdProcedure =
+        'sp_get_item_full_detail';
 
-        $result->bindValue(
-            ':search',
-            $search,
-            $search === null ? PDO::PARAM_NULL : PDO::PARAM_STR
-        );
-
-        $result->bindValue(
-            ':category',
-            $category,
-            $category === null ? PDO::PARAM_NULL : PDO::PARAM_STR
-        );
-
-        $result->execute();
-
-        $count = $result->fetchColumn();
-
-        $result->nextRowset();
-        $result->closeCursor();
-
-        return $count;
-    }
 
     // Get catalog items by category
     function getCategoryCatalog($category, $limit = null, $offset = 0)

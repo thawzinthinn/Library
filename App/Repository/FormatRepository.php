@@ -8,17 +8,15 @@
 namespace App\Repository;
 
 use App\Contract\FormatRepositoryInterface;
+use App\Repository\BaseRepository;
 
 use PDO;
 
-class FormatRepository implements FormatRepositoryInterface
+class FormatRepository extends BaseRepository implements FormatRepositoryInterface
 {
-    private PDO $db;
-
     public function __construct(PDO $db)
     {
-        // Store database connection
-        $this->db = $db;
+        parent::__construct($db);
     }
 
     // Get formats based on selected category

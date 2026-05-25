@@ -5,14 +5,9 @@
  * from the data source.
  */
 namespace App\Contract;
-interface CatalogRepositoryInterface
+interface CatalogRepositoryInterface extends BaseInterface
 {
-    // Get total catalog item count
-    public function getCatalogCount($category = null, $search = null);
-
-    // Get complete catalog list
-    // public function getFullCatalog($limit = null, $offset = 0);
-
+    
     // Get catalog items by category
     public function getCategoryCatalog($category, $limit = null, $offset = 0);
 

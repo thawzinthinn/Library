@@ -1,37 +1,22 @@
 <?php
 
-/*
- * Handles catalog business logic and orchestration.
- * Does NOT directly talk to DB.
- * Only uses Repository.
- */
 namespace App\Service;
 
 use App\Contract\CatalogRepositoryInterface;
-
 use App\Repository\CatalogRepository;
 
-use App\inc\Database;
-class CatalogService
+class CatalogService extends BaseService
 {
     private CatalogRepositoryInterface $repo;
 
-    /*
-     * Constructor with dependency injection (defensive fallback included)
-     */
     public function __construct(?CatalogRepositoryInterface $repo = null)
     {
-        if ($repo === null) {
-            $db = Database::getConnection();
-            $repo = new CatalogRepository($db);
-        }
-
-        $this->repo = $repo;
+        // fallback ONLY for small projects (keeps flexibility)
+        $this->repo = $repo ?? new CatalogRepository($this->db());
     }
 
-    /* =========================================================
-     * HOME PAGE DATA
-     * ========================================================= */
+    /* ================= HOME PAGE ================= */
+
     public function getHomePageData(): array
     {
         return [
@@ -41,16 +26,19 @@ class CatalogService
         ];
     }
 
-    /* =========================================================
-     * MAIN CATALOG PAGE ORCHESTRATION
-     * ========================================================= */
+    /* ================= CATALOG PAGE ================= */
+
     public function getCatalogPage(array $queryParams): array
     {
         $section = $this->getCategory($queryParams);
+
         $search = $this->getSearchTerm($queryParams);
         $currentPage = $this->getCurrentPage($queryParams);
 
-        $totalItems = $this->repo->getCatalogCount($section, $search);
+        $totalItems = $this->repo->count([
+            'category' => $section,
+            'search' => $search
+        ]);
 
         $pagination = $this->buildPagination($totalItems, $currentPage);
 
@@ -72,23 +60,26 @@ class CatalogService
         ];
     }
 
-    /* =========================================================
-     * CATEGORY VALIDATION
-     * ========================================================= */
+    /* ================= SINGLE ITEM ================= */
+
+    public function getSingleItem(int $id): ?array
+    {
+        return $this->repo->findById($id);
+    }
+
+    /* ================= PRIVATE HELPERS ================= */
+
     private function getCategory(array $params): ?string
     {
-        $category = $params['cat'] ?? null;
-
         $allowed = ['books', 'movies', 'music'];
 
-        return ($category !== null && in_array($category, $allowed, true))
+        $category = $params['cat'] ?? null;
+
+        return ($category && in_array($category, $allowed, true))
             ? $category
             : null;
     }
 
-    /* =========================================================
-     * SEARCH HANDLING
-     * ========================================================= */
     private function getSearchTerm(array $params): ?string
     {
         $search = trim($params['s'] ?? '');
@@ -96,9 +87,6 @@ class CatalogService
         return $search !== '' ? $search : null;
     }
 
-    /* =========================================================
-     * PAGINATION INPUT
-     * ========================================================= */
     private function getCurrentPage(array $params): int
     {
         $page = filter_var($params['pg'] ?? 1, FILTER_VALIDATE_INT);
@@ -106,9 +94,6 @@ class CatalogService
         return ($page === false || $page < 1) ? 1 : $page;
     }
 
-    /* =========================================================
-     * PAGINATION LOGIC
-     * ========================================================= */
     private function buildPagination(int $totalItems, int $currentPage): array
     {
         $itemsPerPage = 8;
@@ -119,42 +104,35 @@ class CatalogService
             $currentPage = $totalPages;
         }
 
-        $offset = ($currentPage - 1) * $itemsPerPage;
-
         return [
             'limit' => $itemsPerPage,
-            'offset' => $offset,
+            'offset' => ($currentPage - 1) * $itemsPerPage,
             'currentPage' => $currentPage,
             'totalPages' => $totalPages
         ];
     }
-    /* =========================================================
-     * DATA ORCHESTRATION (CHOOSING REPOSITORY METHOD)
-     * ========================================================= */
+
     private function loadCatalogData(
         ?string $section,
         ?string $search,
         int $limit,
         int $offset
     ): array {
-        if ($search !== null && $section !== null) {
+        if ($search && $section) {
             return $this->repo->getSearchCatalog($search, $section, $limit, $offset);
         }
 
-        if ($search !== null) {
+        if ($search) {
             return $this->repo->getSearchCatalog($search, null, $limit, $offset);
         }
 
-        if ($section !== null) {
+        if ($section) {
             return $this->repo->getCategoryCatalog($section, $limit, $offset);
         }
 
         return $this->repo->findAll($limit, $offset);
     }
 
-    /* =========================================================
-     * UI HELPERS
-     * ========================================================= */
     private function buildPageTitle(?string $section): string
     {
         return $section ? ucfirst($section) : 'Full Catalog';
@@ -164,22 +142,14 @@ class CatalogService
     {
         $params = [];
 
-        if ($section !== null) {
+        if ($section) {
             $params[] = 'cat=' . urlencode($section);
         }
 
-        if ($search !== null) {
+        if ($search) {
             $params[] = 's=' . urlencode($search);
         }
 
         return implode('&', $params);
-    }
-
-    /* =========================================================
-     * SINGLE ITEM (OPTIONAL BUSINESS LOGIC LAYER)
-     * ========================================================= */
-    public function getSingleItem(int $id): array
-    {
-        return $this->repo->findById($id);
     }
 }

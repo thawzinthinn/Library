@@ -1,10 +1,13 @@
 <?php
 
+namespace App\Contract;
+
 interface BaseInterface
 {
-    // public function create(array $data);
-    // public function update(int $id, array $data);
-    // public function delete(int $id);
+    // public function Count($category = null, $search = null);
+
+     public function Count(array $filters = []): int;
     public function findById(int $id);
+
     public function findAll(int $limit = null, int $offset = 0);
 }

@@ -3,8 +3,10 @@
 namespace App\Repository;
 
 use PDO;
+use App\Contract\BaseInterface;
 
-abstract class BaseRepository
+// abstract class BaseRepository
+abstract class BaseRepository implements BaseInterface
 {
     protected PDO $db;
 
@@ -12,56 +14,159 @@ abstract class BaseRepository
 
     protected string $primaryKey = 'id';
 
+    // Optional stored procedures
+    protected ?string $getByIdProcedure = null;
+
+    protected ?string $findAllProcedure = null;
+    protected ?string $countProcedure = null;
+
     public function __construct(PDO $db)
     {
         $this->db = $db;
     }
 
-    function findAll($limit = null, $offset = 0)
+    public function findAll(?int $limit = null, int $offset = 0): array
     {
-        $result = $this->db->prepare(" CALL sp_get_full_catalog ( ? , ? )");
+        // Use stored procedure if defined
+        if ($this->findAllProcedure !== null) {
 
-        $result->bindParam(
-            1,
-            $limit,
-            $limit === null ? PDO::PARAM_NULL : PDO::PARAM_INT
+            $stmt = $this->db->prepare(
+                "CALL {$this->findAllProcedure}(?, ?)"
+            );
+
+            $stmt->bindValue(
+                1,
+                $limit,
+                $limit === null
+                ? PDO::PARAM_NULL
+                : PDO::PARAM_INT
+            );
+
+            $stmt->bindValue(2, $offset, PDO::PARAM_INT);
+
+        } else {
+
+            // Default table query
+            $sql = "SELECT * FROM {$this->table}";
+
+            if ($limit !== null) {
+                $sql .= " LIMIT :limit OFFSET :offset";
+            }
+
+            $stmt = $this->db->prepare($sql);
+
+            if ($limit !== null) {
+                $stmt->bindValue(
+                    ':limit',
+                    $limit,
+                    PDO::PARAM_INT
+                );
+
+                $stmt->bindValue(
+                    ':offset',
+                    $offset,
+                    PDO::PARAM_INT
+                );
+            }
+        }
+
+        $stmt->execute();
+
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $stmt->closeCursor();
+
+        return $data;
+    }
+
+    public function findById(int $id): ?array
+    {
+        // Use stored procedure if defined
+        if ($this->getByIdProcedure !== null) {
+            $stmt = $this->db->prepare(
+                "CALL {$this->getByIdProcedure}(?)"
+            );
+
+            $stmt->bindValue(1, $id, PDO::PARAM_INT);
+
+        } else {
+
+            // Default table query
+            $stmt = $this->db->prepare(
+                "SELECT * FROM {$this->table}
+                 WHERE {$this->primaryKey} = :id
+                 LIMIT 1"
+            );
+
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        }
+
+        $stmt->execute();
+
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        $stmt->closeCursor();
+
+        return $data ?: null;
+    }
+    public function count(array $filters = []): int
+{
+    $search = $filters['search'] ?? null;
+    $category = $filters['category'] ?? null;
+
+    // =========================
+    // USE STORED PROCEDURE
+    // =========================
+    if ($this->countProcedure !== null) {
+
+        $stmt = $this->db->prepare(
+            "CALL {$this->countProcedure}(:search, :category)"
         );
 
-        $result->bindParam(2, $offset, PDO::PARAM_INT);
+        $stmt->bindValue(
+            ':search',
+            $search,
+            $search === null ? PDO::PARAM_NULL : PDO::PARAM_STR
+        );
 
-        $result->execute();
+        $stmt->bindValue(
+            ':category',
+            $category,
+            $category === null ? PDO::PARAM_NULL : PDO::PARAM_STR
+        );
 
-        $catalog = $result->fetchAll();
+    } else {
 
-        $result->closeCursor();
+        // =========================
+        // DEFAULT TABLE COUNT
+        // =========================
+        $sql = "SELECT COUNT(*) FROM {$this->table} WHERE 1=1";
 
-        return $catalog;
-    }
-    function findById($id)
-    {
-        $result = $this->db->prepare("CALL sp_get_item_full_detail (?)"); // use prepare() function
-
-        $result->bindParam(1, $id, PDO::PARAM_INT);
-
-        $result->execute();
-
-        $item = $result->fetch(PDO::FETCH_ASSOC);
-
-        // Return null if item does not exist
-        if ($item === false) {
-            $result->closeCursor();
-            return null;
+        if ($search !== null) {
+            $sql .= " AND title LIKE :search";
         }
 
-        $result->nextRowset();
-
-        // Load related people data (actors, authors, etc.)
-        while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-            $item[strtolower($row['role'])][] = $row['fullname'];
+        if ($category !== null) {
+            $sql .= " AND category = :category";
         }
 
-        $result->closeCursor();
+        $stmt = $this->db->prepare($sql);
 
-        return $item;
+        if ($search !== null) {
+            $stmt->bindValue(':search', "%{$search}%", PDO::PARAM_STR);
+        }
+
+        if ($category !== null) {
+            $stmt->bindValue(':category', $category, PDO::PARAM_STR);
+        }
     }
+
+    $stmt->execute();
+
+    $count = (int) $stmt->fetchColumn();
+
+    $stmt->closeCursor();
+
+    return $count;
+}
 }
