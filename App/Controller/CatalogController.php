@@ -15,6 +15,7 @@ class CatalogController extends BaseController
 
     public function home(): void
     {
+        $this->requireLogin();
         $data = $this->catalogService->getHomePageData();
         // var_dump($data);
         $this->view('home', $data);
@@ -22,6 +23,7 @@ class CatalogController extends BaseController
 
     public function index(): void
     {
+        $this->requireLogin();
         $data = $this->catalogService->getCatalogPage($_GET);
         // var_dump($data);
         $this->view('catalog', $data);

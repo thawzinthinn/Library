@@ -1,7 +1,8 @@
 <?php
 
 namespace App\Controller\Api;
-
+use App\Service\FormatService;
+use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\PHPMailer;
 
 class ApiSuggestController

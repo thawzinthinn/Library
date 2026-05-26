@@ -17,6 +17,7 @@ class SuggestController extends BaseController
 
     public function index(): void
     {
+        $this->requireLogin();
         $data = [
             'pageTitle' => "Suggest a media item",
             'section' => "suggest",
@@ -31,8 +32,8 @@ class SuggestController extends BaseController
         }
 
         $data['categories'] = $this->formatService->category_drop_down();
-        $data['formats']    = $this->formatService->format_array();
-        $data['genres']     = $this->formatService->genres_array();
+        $data['formats'] = $this->formatService->format_array();
+        $data['genres'] = $this->formatService->genres_array();
 
         $this->view('suggest', $data);
     }

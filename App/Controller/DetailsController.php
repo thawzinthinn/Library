@@ -15,6 +15,7 @@ class DetailsController extends BaseController
 
     public function show(): void
     {
+        $this->requireLogin();
         $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 
         if (!$id) {
