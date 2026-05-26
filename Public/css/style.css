@@ -609,3 +609,39 @@ body {
     text-decoration: underline;
 }
 
+.field-error {
+    color: #d8000c;
+    font-size: 13px;
+    margin-top: 6px;
+    display: block;
+    font-weight: 500;
+}
+
+.input-error {
+    border: 1px solid #d8000c !important;
+}
+
+/* PASSWORD WRAPPER */
+.password-wrapper {
+    position: relative;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-right: 40px;
+}
+
+/* ICON */
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 18px;
+    color: #666;
+}
+
+.toggle-password:hover {
+    color: #ef7d7d;
+}

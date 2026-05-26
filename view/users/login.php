@@ -1,6 +1,9 @@
 <?php require BASE_PATH . '/view/layout/header.php'; ?>
 
-<link rel="stylesheet" href="<?= BASE_URL ?>/Public/css/login.css">
+<?php
+$error = $_SESSION['error'] ?? [];
+$old = $_SESSION['old'] ?? [];
+?>
 
 <div class="auth-page">
 
@@ -8,19 +11,44 @@
 
         <h1>Welcome Back</h1>
 
-        <?php if (!empty($error)): ?>
+        <?php if (!empty($error['general'])): ?>
             <div class="error-message">
-                <?= htmlspecialchars($error) ?>
+                <?= htmlspecialchars($error['general']) ?>
             </div>
         <?php endif; ?>
 
         <form method="POST" action="<?= BASE_URL ?>/Public/index.php?page=login">
 
+            <!-- EMAIL -->
             <label>Email Address</label>
-            <input type="email" name="email" required>
+            <input type="email"
+                   name="email"
+                   value="<?= htmlspecialchars($old['email'] ?? '') ?>">
 
+            <?php if (!empty($error['email'])): ?>
+                <small class="field-error">
+                    <?= htmlspecialchars($error['email']) ?>
+                </small>
+            <?php endif; ?>
+
+            <!-- PASSWORD -->
             <label>Password</label>
-            <input type="password" name="password" required>
+
+            <div class="password-wrapper">
+                <input type="password"
+                       name="password"
+                       id="login-password">
+
+                <span class="toggle-password" onclick="toggleLoginPassword()">
+                    👁
+                </span>
+            </div>
+
+            <?php if (!empty($error['password'])): ?>
+                <small class="field-error">
+                    <?= htmlspecialchars($error['password']) ?>
+                </small>
+            <?php endif; ?>
 
             <button type="submit">Login</button>
 
@@ -36,5 +64,17 @@
     </div>
 
 </div>
+
+<script>
+function toggleLoginPassword() {
+    const input = document.getElementById("login-password");
+
+    input.type = input.type === "password" ? "text" : "password";
+}
+</script>
+
+<?php
+unset($_SESSION['error'], $_SESSION['old']);
+?>
 
 <?php require BASE_PATH . '/view/layout/footer.php'; ?>

@@ -3,6 +3,9 @@
 namespace App\Controller;
 
 use App\Service\UserService;
+use App\Http\Requests\UserRequest;
+use App\Http\Requests\LoginRequest;
+
 
 class UserController extends BaseController
 {
@@ -20,30 +23,22 @@ class UserController extends BaseController
     */
     public function login(): void
     {
-        $error = null;
-
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-            try {
+            // 1. Validate request
+            $data = $this->validateRequest(LoginRequest::class);
 
-                $email = trim($this->post('email'));
-                $password = trim($this->post('password'));
+            // 2. Business logic
+            $this->userService->login($data);
 
-                $this->userService->login($email, $password);
-
-                $this->redirect(BASE_URL . '/Public/index.php?page=home');
-
-            } catch (\Exception $e) {
-
-                $error = $e->getMessage();
-            }
+            // 3. Redirect on success
+            $this->redirect(BASE_URL . '/Public/index.php?page=home');
         }
 
         $this->view('users/login', [
             'pageTitle' => 'Login',
             'section' => '',
             'hideSearch' => true,
-            'error' => $error
         ]);
     }
 
@@ -52,38 +47,33 @@ class UserController extends BaseController
     | REGISTER
     |--------------------------------------------------------------------------
     */
+
+
     public function register(): void
     {
-        $error = null;
-
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-            try {
+            // 1. Validate request (throws exception automatically if invalid)
+            $data = $this->validateRequest(UserRequest::class);
 
-                $name = trim($this->post('name'));
-                $email = trim($this->post('email'));
-                $password = trim($this->post('password'));
 
-                $this->userService->register([
-                    'name' => $name,
-                    'email' => $email,
-                    'password' => $password
-                ]);
+            // 2. Business logic
+            $this->userService->register($data);
 
-                $this->redirect(BASE_URL . '/Public/index.php?page=login');
-
-            } catch (\Exception $e) {
-
-                $error = $e->getMessage();
-            }
+            // 3. Success redirect
+            $this->redirect(BASE_URL . '/Public/index.php?page=login');
         }
 
+        // 4. Show view (GET request OR after error redirect)
         $this->view('users/register', [
             'pageTitle' => 'Register',
             'section' => '',
             'hideSearch' => true,
-            'error' => $error
+            'error' => $_SESSION['error'] ?? []
         ]);
+
+        // clear flash error after showing
+        unset($_SESSION['error']);
     }
 
     /*

@@ -7,4 +7,6 @@ use App\Contract\BaseInterface;
 interface UserRepositoryInterface extends BaseInterface
 {
     public function findByEmail(string $email);
+    public function create(array $data): bool;
+
 }

@@ -34,27 +34,40 @@ class UserService extends BaseService
 
     public function register(array $data): void
     {
-        if (empty($data['name']) || empty($data['email']) || empty($data['password'])) {
-            throw new \InvalidArgumentException('Name, email and password are required');
-        }
-
         if ($this->getUserByEmail($data['email'])) {
-            throw new \InvalidArgumentException('Email is already registered');
+            throw new \InvalidArgumentException(
+                json_encode([
+                    'email' => 'Email already exists'
+                ])
+            );
         }
 
-        $this->createUser($data);
+        $data['password'] = password_hash(
+            $data['password'],
+            PASSWORD_BCRYPT
+        );
+
+        $this->repo->create($data);
     }
 
-    public function login(string $email, string $password): void
+    public function login(array $data): void
     {
-        if (empty($email) || empty($password)) {
-            throw new \InvalidArgumentException('Email and password are required');
+        if (empty($data['email']) || empty($data['password'])) {
+            throw new \InvalidArgumentException(
+                json_encode([
+                    'general' => 'Email and password are required'
+                ])
+            );
         }
 
-        $user = $this->getUserByEmail($email);
+        $user = $this->getUserByEmail($data['email']);
 
-        if (!$user || !password_verify($password, $user['password'])) {
-            throw new \RuntimeException('Invalid email or password');
+        if (!$user || !password_verify($data['password'], $user['password'])) {
+            throw new \RuntimeException(
+                json_encode([
+                    'general' => 'Invalid email or password'
+                ])
+            );
         }
 
         if (session_status() !== PHP_SESSION_ACTIVE) {
@@ -74,25 +87,5 @@ class UserService extends BaseService
 
         unset($_SESSION['user_id'], $_SESSION['user_name'], $_SESSION['user_email']);
         session_destroy();
-    }
-
-    public function createUser(array $data)
-    {
-        // Example business logic: password hashing
-        if (!isset($data['password'])) {
-            throw new \InvalidArgumentException("Password is required");
-        }
-
-        $data['password'] = password_hash($data['password'], PASSWORD_BCRYPT);
-
-        $stmt = $this->db()->prepare("
-            INSERT INTO users (name, email, password)
-            VALUES (:name, :email, :password)
-        ");
-
-        $stmt->bindParam(':name', $data['name']);
-        $stmt->bindParam(':email', $data['email']);
-        $stmt->bindParam(':password', $data['password']);
-        $stmt->execute();
     }
 }

@@ -22,5 +22,18 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
         return $user ?: null;
     }
 
-    // findById and findAll are inherited from BaseRepository
+    public function create(array $data): bool
+    {
+        $stmt = $this->db->prepare("
+        INSERT INTO users (name, email, password)
+        VALUES (:name, :email, :password)
+    ");
+
+        return $stmt->execute([
+            ':name' => $data['name'],
+            ':email' => $data['email'],
+            ':password' => $data['password']
+        ]);
+    }
+
 }

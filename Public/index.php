@@ -11,6 +11,7 @@ define('BASE_PATH', dirname(__DIR__));
 require_once BASE_PATH . '/vendor/autoload.php';
 
 use Dotenv\Dotenv;
+use App\Core\ErrorHandler;
 
 use App\inc\Database;
 
@@ -19,6 +20,14 @@ use App\Repository\FormatRepository;
 
 use App\Service\CatalogService;
 use App\Service\FormatService;
+
+/*
+|--------------------------------------------------------------------------
+| GLOBAL ERROR HANDLER
+|--------------------------------------------------------------------------
+*/
+set_exception_handler([ErrorHandler::class, 'handle']);
+
 
 /*
 |--------------------------------------------------------------------------
