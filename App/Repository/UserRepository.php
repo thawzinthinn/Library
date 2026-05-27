@@ -3,37 +3,51 @@
 namespace App\Repository;
 
 use App\Contract\UserRepositoryInterface;
+use App\Model\User;
 use PDO;
 
 class UserRepository extends BaseRepository implements UserRepositoryInterface
 {
-    protected string $table = 'users'; // table name
+    protected string $table = 'users';
     protected string $primaryKey = 'id';
+    protected string $model = User::class;
 
-    public function findByEmail(string $email)
+    /*
+    |--------------------------------------------------------------------------
+    | FIND BY EMAIL (RETURN MODEL)
+    |--------------------------------------------------------------------------
+    */
+    public function findByEmail(string $email): ?User
     {
-        $stmt = $this->db->prepare("SELECT * FROM users WHERE email = ?");
-        $stmt->bindParam(1, $email, PDO::PARAM_STR);
+        $stmt = $this->db->prepare(
+            "CALL sp_find_user_by_email(:email)"
+        );
+
+        $stmt->bindValue(':email', $email, PDO::PARAM_STR);
         $stmt->execute();
 
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
         $stmt->closeCursor();
 
-        return $user ?: null;
+        if (!$data) {
+            return null;
+        }
+
+        return User::fromArray($data);
     }
 
-    public function create(array $data): bool
+    /*
+    |--------------------------------------------------------------------------
+    | CREATE USER (ACCEPT MODEL)
+    |--------------------------------------------------------------------------
+    */
+    public function create(User $user): bool
     {
         $stmt = $this->db->prepare("
         INSERT INTO users (name, email, password)
         VALUES (:name, :email, :password)
     ");
 
-        return $stmt->execute([
-            ':name' => $data['name'],
-            ':email' => $data['email'],
-            ':password' => $data['password']
-        ]);
+        return $stmt->execute($user->toArray());
     }
-
 }

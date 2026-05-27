@@ -16,4 +16,5 @@ require_once BASE_PATH . '/App/inc/CustomPath.php'; ?>
     </ul>
 </main>
 
+
 <?php require BASE_PATH . '/view/layout/footer.php'; ?>

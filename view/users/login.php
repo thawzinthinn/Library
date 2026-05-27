@@ -21,9 +21,7 @@ $old = $_SESSION['old'] ?? [];
 
             <!-- EMAIL -->
             <label>Email Address</label>
-            <input type="email"
-                   name="email"
-                   value="<?= htmlspecialchars($old['email'] ?? '') ?>">
+            <input type="email" name="email" value="<?= htmlspecialchars($old['email'] ?? '') ?>">
 
             <?php if (!empty($error['email'])): ?>
                 <small class="field-error">
@@ -35,9 +33,7 @@ $old = $_SESSION['old'] ?? [];
             <label>Password</label>
 
             <div class="password-wrapper">
-                <input type="password"
-                       name="password"
-                       id="login-password">
+                <input type="password" name="password" id="login-password">
 
                 <span class="toggle-password" onclick="toggleLoginPassword()">
                     👁
@@ -66,11 +62,11 @@ $old = $_SESSION['old'] ?? [];
 </div>
 
 <script>
-function toggleLoginPassword() {
-    const input = document.getElementById("login-password");
+    function toggleLoginPassword() {
+        const input = document.getElementById("login-password");
 
-    input.type = input.type === "password" ? "text" : "password";
-}
+        input.type = input.type === "password" ? "text" : "password";
+    }
 </script>
 
 <?php

@@ -31,7 +31,10 @@ class UserController extends BaseController
             // 2. Business logic
             $this->userService->login($data);
 
-            // 3. Redirect on success
+            // 3. Save success message
+            $_SESSION['success'] = 'Login successful! Welcome back.';
+
+            // 4. Redirect
             $this->redirect(BASE_URL . '/Public/index.php?page=home');
         }
 

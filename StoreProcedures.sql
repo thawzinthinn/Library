@@ -344,3 +344,18 @@ ON People(fullname);
 
 CREATE INDEX idx_media_types_category
 ON Media_Types(category);
+
+-- ==========================================
+-- find user email
+-- ============================================
+DELIMITER $$
+
+CREATE PROCEDURE sp_find_user_by_email(IN p_email VARCHAR(255))
+BEGIN
+    SELECT *
+    FROM users
+    WHERE email = p_email
+    LIMIT 1;
+END $$
+
+DELIMITER ;

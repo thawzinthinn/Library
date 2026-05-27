@@ -35,48 +35,44 @@ class UserService extends BaseService
     public function register(array $data): void
     {
         if ($this->getUserByEmail($data['email'])) {
-            throw new \InvalidArgumentException(
-                json_encode([
-                    'email' => 'Email already exists'
-                ])
-            );
+            throw new \InvalidArgumentException(json_encode([
+                'email' => 'Email already exists'
+            ]));
         }
 
-        $data['password'] = password_hash(
-            $data['password'],
-            PASSWORD_BCRYPT
-        );
+        // Create User object
+        $user = new \App\Model\User();
 
-        $this->repo->create($data);
+        $user->setName($data['name']);
+        $user->setEmail($data['email']);
+        $user->setPassword($data['password']); // auto-hashed in model
+
+        $this->repo->create($user);
     }
 
     public function login(array $data): void
     {
         if (empty($data['email']) || empty($data['password'])) {
-            throw new \InvalidArgumentException(
-                json_encode([
-                    'general' => 'Email and password are required'
-                ])
-            );
+            throw new \InvalidArgumentException(json_encode([
+                'general' => 'Email and password are required'
+            ]));
         }
 
         $user = $this->getUserByEmail($data['email']);
 
-        if (!$user || !password_verify($data['password'], $user['password'])) {
-            throw new \RuntimeException(
-                json_encode([
-                    'general' => 'Invalid email or password'
-                ])
-            );
+        if (!$user || !$user->verifyPassword($data['password'])) {
+            throw new \RuntimeException(json_encode([
+                'general' => 'Invalid email or password'
+            ]));
         }
 
         if (session_status() !== PHP_SESSION_ACTIVE) {
             session_start();
         }
 
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['user_name'] = $user['name'];
-        $_SESSION['user_email'] = $user['email'];
+        $_SESSION['user_id'] = $user->getId();
+        $_SESSION['user_name'] = $user->getName();
+        $_SESSION['user_email'] = $user->getEmail();
     }
 
     public function logout(): void

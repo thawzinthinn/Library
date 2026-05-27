@@ -88,8 +88,17 @@ if (session_status() === PHP_SESSION_NONE) {
                         </li>
 
                     <?php endif; ?>
-
                 </ul>
+
+                <?php if (!empty($_SESSION['success'])): ?>
+                    <div class="success-message">
+                        <?= htmlspecialchars($_SESSION['success']) ?>
+                    </div>
+
+                    <?php unset($_SESSION['success']); ?>
+                <?php endif; ?>
+
+                <!-- </ul> -->
 
             </div>
         </header>

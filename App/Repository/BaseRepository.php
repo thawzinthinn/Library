@@ -5,7 +5,6 @@ namespace App\Repository;
 use PDO;
 use App\Contract\BaseInterface;
 
-// abstract class BaseRepository
 abstract class BaseRepository implements BaseInterface
 {
     protected PDO $db;
@@ -14,10 +13,36 @@ abstract class BaseRepository implements BaseInterface
 
     protected string $primaryKey = 'id';
 
-    // Optional stored procedures
+    protected string $model;
+
+    protected function mapToModel(array $data): object
+    {
+        return $this->model::fromArray($data);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CUSTOM SELECT COLUMNS
+    |--------------------------------------------------------------------------
+    | Example:
+    | protected ?string $selectColumns =
+    |     "id, name, email";
+    |
+    | OR with alias:
+    | "u.id, u.name, c.category_name"
+    |--------------------------------------------------------------------------
+    */
+    protected ?string $selectColumns = null;
+
+    /*
+    |--------------------------------------------------------------------------
+    | STORED PROCEDURES
+    |--------------------------------------------------------------------------
+    */
     protected ?string $getByIdProcedure = null;
 
     protected ?string $findAllProcedure = null;
+
     protected ?string $countProcedure = null;
 
     public function __construct(PDO $db)
@@ -25,9 +50,13 @@ abstract class BaseRepository implements BaseInterface
         $this->db = $db;
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | FIND ALL
+    |--------------------------------------------------------------------------
+    */
     public function findAll(?int $limit = null, int $offset = 0): array
     {
-        // Use stored procedure if defined
         if ($this->findAllProcedure !== null) {
 
             $stmt = $this->db->prepare(
@@ -46,8 +75,9 @@ abstract class BaseRepository implements BaseInterface
 
         } else {
 
-            // Default table query
-            $sql = "SELECT * FROM {$this->table}";
+            $columns = $this->selectColumns ?? '*';
+
+            $sql = "SELECT {$columns} FROM {$this->table}";
 
             if ($limit !== null) {
                 $sql .= " LIMIT :limit OFFSET :offset";
@@ -56,6 +86,7 @@ abstract class BaseRepository implements BaseInterface
             $stmt = $this->db->prepare($sql);
 
             if ($limit !== null) {
+
                 $stmt->bindValue(
                     ':limit',
                     $limit,
@@ -72,17 +103,25 @@ abstract class BaseRepository implements BaseInterface
 
         $stmt->execute();
 
-        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $stmt->closeCursor();
 
-        return $data;
+        return array_map(
+            fn(array $row) => $this->mapToModel($row),
+            $rows
+        );
     }
 
-    public function findById(int $id): ?array
+    /*
+    |--------------------------------------------------------------------------
+    | FIND BY ID
+    |--------------------------------------------------------------------------
+    */
+    public function findById(int $id): ?object
     {
-        // Use stored procedure if defined
         if ($this->getByIdProcedure !== null) {
+
             $stmt = $this->db->prepare(
                 "CALL {$this->getByIdProcedure}(?)"
             );
@@ -91,11 +130,13 @@ abstract class BaseRepository implements BaseInterface
 
         } else {
 
-            // Default table query
+            $columns = $this->selectColumns ?? '*';
+
             $stmt = $this->db->prepare(
-                "SELECT * FROM {$this->table}
-                 WHERE {$this->primaryKey} = :id
-                 LIMIT 1"
+                "SELECT {$columns}
+             FROM {$this->table}
+             WHERE {$this->primaryKey} = :id
+             LIMIT 1"
             );
 
             $stmt->bindValue(':id', $id, PDO::PARAM_INT);
@@ -107,66 +148,91 @@ abstract class BaseRepository implements BaseInterface
 
         $stmt->closeCursor();
 
-        return $data ?: null;
+        if (!$data) {
+            return null;
+        }
+
+        return $this->mapToModel($data);
     }
+    /*
+    |--------------------------------------------------------------------------
+    | COUNT
+    |--------------------------------------------------------------------------
+    */
     public function count(array $filters = []): int
-{
-    $search = $filters['search'] ?? null;
-    $category = $filters['category'] ?? null;
+    {
+        $search = $filters['search'] ?? null;
+        $category = $filters['category'] ?? null;
 
-    // =========================
-    // USE STORED PROCEDURE
-    // =========================
-    if ($this->countProcedure !== null) {
+        /*
+        |--------------------------------------------------------------------------
+        | USE STORED PROCEDURE
+        |--------------------------------------------------------------------------
+        */
+        if ($this->countProcedure !== null) {
 
-        $stmt = $this->db->prepare(
-            "CALL {$this->countProcedure}(:search, :category)"
-        );
+            $stmt = $this->db->prepare(
+                "CALL {$this->countProcedure}(:search, :category)"
+            );
 
-        $stmt->bindValue(
-            ':search',
-            $search,
-            $search === null ? PDO::PARAM_NULL : PDO::PARAM_STR
-        );
+            $stmt->bindValue(
+                ':search',
+                $search,
+                $search === null
+                ? PDO::PARAM_NULL
+                : PDO::PARAM_STR
+            );
 
-        $stmt->bindValue(
-            ':category',
-            $category,
-            $category === null ? PDO::PARAM_NULL : PDO::PARAM_STR
-        );
+            $stmt->bindValue(
+                ':category',
+                $category,
+                $category === null
+                ? PDO::PARAM_NULL
+                : PDO::PARAM_STR
+            );
 
-    } else {
+        } else {
 
-        // =========================
-        // DEFAULT TABLE COUNT
-        // =========================
-        $sql = "SELECT COUNT(*) FROM {$this->table} WHERE 1=1";
+            /*
+            |--------------------------------------------------------------------------
+            | DEFAULT COUNT QUERY
+            |--------------------------------------------------------------------------
+            */
+            $sql = "SELECT COUNT(*) FROM {$this->table} WHERE 1=1";
 
-        if ($search !== null) {
-            $sql .= " AND title LIKE :search";
+            if ($search !== null) {
+                $sql .= " AND title LIKE :search";
+            }
+
+            if ($category !== null) {
+                $sql .= " AND category = :category";
+            }
+
+            $stmt = $this->db->prepare($sql);
+
+            if ($search !== null) {
+                $stmt->bindValue(
+                    ':search',
+                    "%{$search}%",
+                    PDO::PARAM_STR
+                );
+            }
+
+            if ($category !== null) {
+                $stmt->bindValue(
+                    ':category',
+                    $category,
+                    PDO::PARAM_STR
+                );
+            }
         }
 
-        if ($category !== null) {
-            $sql .= " AND category = :category";
-        }
+        $stmt->execute();
 
-        $stmt = $this->db->prepare($sql);
+        $count = (int) $stmt->fetchColumn();
 
-        if ($search !== null) {
-            $stmt->bindValue(':search', "%{$search}%", PDO::PARAM_STR);
-        }
+        $stmt->closeCursor();
 
-        if ($category !== null) {
-            $stmt->bindValue(':category', $category, PDO::PARAM_STR);
-        }
+        return $count;
     }
-
-    $stmt->execute();
-
-    $count = (int) $stmt->fetchColumn();
-
-    $stmt->closeCursor();
-
-    return $count;
-}
 }
