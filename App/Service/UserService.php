@@ -47,7 +47,7 @@ class UserService extends BaseService
         $user->setEmail($data['email']);
         $user->setPassword($data['password']); // auto-hashed in model
 
-        $this->repo->create($user);
+        $this->repo->create($user->toArray());
     }
 
     public function login(array $data): void

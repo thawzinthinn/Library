@@ -20,18 +20,7 @@ abstract class BaseRepository implements BaseInterface
         return $this->model::fromArray($data);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | CUSTOM SELECT COLUMNS
-    |--------------------------------------------------------------------------
-    | Example:
-    | protected ?string $selectColumns =
-    |     "id, name, email";
-    |
-    | OR with alias:
-    | "u.id, u.name, c.category_name"
-    |--------------------------------------------------------------------------
-    */
+
     protected ?string $selectColumns = null;
 
     /*
@@ -49,12 +38,6 @@ abstract class BaseRepository implements BaseInterface
     {
         $this->db = $db;
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | FIND ALL
-    |--------------------------------------------------------------------------
-    */
     public function findAll(?int $limit = null, int $offset = 0): array
     {
         if ($this->findAllProcedure !== null) {
@@ -113,18 +96,18 @@ abstract class BaseRepository implements BaseInterface
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | FIND BY ID
-    |--------------------------------------------------------------------------
-    */
+
     public function findById(int $id): ?object
     {
         if ($this->getByIdProcedure !== null) {
+            // echo $this->getByIdProcedure;
+            // die;
 
             $stmt = $this->db->prepare(
                 "CALL {$this->getByIdProcedure}(?)"
             );
+            // echo $stmt;
+            // die;
 
             $stmt->bindValue(1, $id, PDO::PARAM_INT);
 
@@ -152,13 +135,9 @@ abstract class BaseRepository implements BaseInterface
             return null;
         }
 
-        return $this->mapToModel($data);
+        return $data ?: null;
     }
-    /*
-    |--------------------------------------------------------------------------
-    | COUNT
-    |--------------------------------------------------------------------------
-    */
+    
     public function count(array $filters = []): int
     {
         $search = $filters['search'] ?? null;
@@ -234,5 +213,71 @@ abstract class BaseRepository implements BaseInterface
         $stmt->closeCursor();
 
         return $count;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CREATE
+    |--------------------------------------------------------------------------
+    */
+    public function create(array $data): bool
+    {
+        $columns = array_keys($data);
+        $placeholders = array_map(fn($column) => ":{$column}", $columns);
+
+        $sql = sprintf(
+            'INSERT INTO %s (%s) VALUES (%s)',
+            $this->table,
+            implode(', ', $columns),
+            implode(', ', $placeholders)
+        );
+
+        $stmt = $this->db->prepare($sql);
+
+        return $stmt->execute($data);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE
+    |--------------------------------------------------------------------------
+    */
+    public function update(int $id, array $data): bool
+    {
+        if (isset($data[$this->primaryKey])) {
+            unset($data[$this->primaryKey]);
+        }
+
+        $columns = array_keys($data);
+        $setClause = implode(
+            ', ',
+            array_map(fn($column) => "{$column} = :{$column}", $columns)
+        );
+
+        $sql = sprintf(
+            'UPDATE %s SET %s WHERE %s = :id',
+            $this->table,
+            $setClause,
+            $this->primaryKey
+        );
+
+        $stmt = $this->db->prepare($sql);
+        $data['id'] = $id;
+
+        return $stmt->execute($data);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | DELETE
+    |--------------------------------------------------------------------------
+    */
+    public function delete(int $id): bool
+    {
+        $stmt = $this->db->prepare(
+            "DELETE FROM {$this->table} WHERE {$this->primaryKey} = :id"
+        );
+
+        return $stmt->execute(['id' => $id]);
     }
 }

@@ -91,31 +91,31 @@ class CatalogRepository extends BaseRepository implements CatalogRepositoryInter
     }
 
     // Get detailed information for a single item
-    // function getSingleItem($id)
-    // {
-    //     $result = $this->db->prepare("CALL sp_get_item_full_detail (?)"); // use prepare() function
+    function getSingleItem($id)
+    {
+        $result = $this->db->prepare("CALL sp_get_item_full_detail (?)"); // use prepare() function
 
-    //     $result->bindParam(1, $id, PDO::PARAM_INT);
+        $result->bindParam(1, $id, PDO::PARAM_INT);
 
-    //     $result->execute();
+        $result->execute();
 
-    //     $item = $result->fetch(PDO::FETCH_ASSOC);
+        $item = $result->fetch(PDO::FETCH_ASSOC);
 
-    //     // Return null if item does not exist
-    //     if ($item === false) {
-    //         $result->closeCursor();
-    //         return null;
-    //     }
+        // Return null if item does not exist
+        if ($item === false) {
+            $result->closeCursor();
+            return null;
+        }
 
-    //     $result->nextRowset();
+        $result->nextRowset();
 
-    //     // Load related people data (actors, authors, etc.)
-    //     while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-    //         $item[strtolower($row['role'])][] = $row['fullname'];
-    //     }
+        // Load related people data (actors, authors, etc.)
+        while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+            $item[strtolower($row['role'])][] = $row['fullname'];
+        }
 
-    //     $result->closeCursor();
+        $result->closeCursor();
 
-    //     return $item;
-    // }
+        return $item;
+    }
 }

@@ -9,7 +9,6 @@ use PDO;
 class UserRepository extends BaseRepository implements UserRepositoryInterface
 {
     protected string $table = 'users';
-    protected string $primaryKey = 'id';
     protected string $model = User::class;
 
     /*
@@ -34,20 +33,5 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
         }
 
         return User::fromArray($data);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | CREATE USER (ACCEPT MODEL)
-    |--------------------------------------------------------------------------
-    */
-    public function create(User $user): bool
-    {
-        $stmt = $this->db->prepare("
-        INSERT INTO users (name, email, password)
-        VALUES (:name, :email, :password)
-    ");
-
-        return $stmt->execute($user->toArray());
     }
 }
