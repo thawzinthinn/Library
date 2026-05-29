@@ -17,17 +17,19 @@ use App\inc\Database;
 
 use App\Repository\CatalogRepository;
 use App\Repository\FormatRepository;
+use App\Repository\UserRepository;
 
 use App\Service\CatalogService;
 use App\Service\FormatService;
+use App\Service\UserService;
 
 /*
 |--------------------------------------------------------------------------
 | GLOBAL ERROR HANDLER
 |--------------------------------------------------------------------------
 */
-set_exception_handler([ErrorHandler::class, 'handle']);
 
+set_exception_handler([ErrorHandler::class, 'handle']);
 
 /*
 |--------------------------------------------------------------------------
@@ -54,6 +56,7 @@ $db = Database::getConnection();
 
 $catalogRepo = new CatalogRepository($db);
 $formatRepo = new FormatRepository($db);
+$userRepo = new UserRepository($db);
 
 /*
 |--------------------------------------------------------------------------
@@ -63,20 +66,37 @@ $formatRepo = new FormatRepository($db);
 
 $catalogService = new CatalogService($catalogRepo);
 $formatService = new FormatService($formatRepo);
+$userService = new UserService($userRepo);
 
 /*
 |--------------------------------------------------------------------------
 | ROUTING
 |--------------------------------------------------------------------------
 */
+// $requestUri = $_SERVER['REQUEST_URI'];
 
-$isApi = isset($_GET['api']);
+/*
+|--------------------------------------------------------------------------
+| API ROUTES
+|--------------------------------------------------------------------------
+*/
+$api = $_GET['api'] ?? null;
 
-if ($isApi) {
+if ($api !== null) {
 
     require BASE_PATH . '/routes/api.php';
 
-} else {
+    $router->dispatch(
+        '/' . $api,
+        $_SERVER['REQUEST_METHOD']
+    );
 
-    require BASE_PATH . '/routes/web.php';
+    exit;
 }
+/*
+|--------------------------------------------------------------------------
+| WEB ROUTES
+|--------------------------------------------------------------------------
+*/
+
+require BASE_PATH . '/routes/web.php';

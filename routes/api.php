@@ -1,38 +1,50 @@
 <?php
+
+use App\Core\Router;
+
 use App\Controller\Api\ApiCatalogController;
 use App\Controller\Api\ApiDetailsController;
 use App\Controller\Api\ApiSuggestController;
+use App\Controller\Api\ApiUserController;
 
-header('Content-Type: application/json');
+$router = new Router();
 
-$api = $_GET['api'] ?? '';
+/*
+|--------------------------------------------------------------------------
+| Catalog APIs
+|--------------------------------------------------------------------------
+*/
 
-switch ($api) {
+$router->get(
+    '/api/catalog',
+    [ApiCatalogController::class, 'index']
+);
 
-    case 'catalog':
+$router->get(
+    '/api/details',
+    [ApiDetailsController::class, 'show']
+);
 
-        $controller = new ApiCatalogController($catalogService);
-        $controller->index();
-        break;
+/*
+|--------------------------------------------------------------------------
+| Suggest API
+|--------------------------------------------------------------------------
+*/
 
-    case 'details':
+$router->post(
+    '/api/suggest',
+    [ApiSuggestController::class, 'store']
+);
 
-        $controller = new ApiDetailsController($catalogService);
-        $controller->show();
-        break;
-        
-    case 'suggest':
+/*
+|--------------------------------------------------------------------------
+| User APIs
+|--------------------------------------------------------------------------
+*/
+$router->get('/users', [ApiUserController::class, 'index']);
+$router->get('/user', [ApiUserController::class, 'show']);
+$router->post('/users', [ApiUserController::class, 'create']);
+$router->post('/user-update', [ApiUserController::class, 'update']);
+$router->post('/user-delete', [ApiUserController::class, 'delete']);
 
-        $controller = new ApiSuggestController($formatService);
-        $controller->store();
-        break;
-
-    default:
-
-        http_response_code(404);
-
-        echo json_encode([
-            'success' => false,
-            'message' => 'API route not found'
-        ]);
-}
+return $router;

@@ -77,14 +77,25 @@ if (session_status() === PHP_SESSION_NONE) {
 
                     <?php else: ?>
 
-                        <li class="welcome-user">
-                            <?= htmlspecialchars($_SESSION['user_name']) ?>
-                        </li>
+                        <li class="user-dropdown">
 
-                        <li>
-                            <a href="<?= BASE_URL ?>/Public/index.php?page=logout">
-                                Logout
-                            </a>
+                            <button class="dropdown-btn">
+                                <span>👤 <?= htmlspecialchars($_SESSION['user_name']) ?></span>
+                                <span style="font-size: 10px; opacity: 0.8;">▼</span>
+                            </button>
+
+                            <div class="dropdown-content">
+
+                                <a href="<?= BASE_URL ?>/Public/index.php?page=profile">
+                                    My Profile
+                                </a>
+
+                                <a href="<?= BASE_URL ?>/Public/index.php?page=logout">
+                                    Logout
+                                </a>
+
+                            </div>
+
                         </li>
 
                     <?php endif; ?>

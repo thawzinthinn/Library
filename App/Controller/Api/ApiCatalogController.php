@@ -1,6 +1,10 @@
 <?php
 
 namespace App\Controller\Api;
+
+use App\Service\CatalogService;
+use App\Response\ApiResponse;
+
 class ApiCatalogController
 {
     private CatalogService $catalogService;
@@ -12,13 +16,21 @@ class ApiCatalogController
 
     public function index(): void
     {
-        header('Content-Type: application/json');
+        try {
 
-        $data = $this->catalogService->getCatalogPage($_GET);
+            $data = $this->catalogService->getCatalogPage($_GET);
 
-        echo json_encode([
-            'success' => true,
-            'data' => $data
-        ]);
+            ApiResponse::success(
+                $data,
+                'Catalog fetched successfully'
+            );
+
+        } catch (\Throwable $e) {
+
+            ApiResponse::error(
+                $e->getMessage(),
+                500
+            );
+        }
     }
 }

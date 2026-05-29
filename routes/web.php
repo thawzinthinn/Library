@@ -75,6 +75,10 @@ switch ($page) {
 
         break;
 
+    case 'profile':
+        (new \App\Controller\ProfileController())->index();
+        break;
+
     /*
     |--------------------------------------------------------------------------
     | LOGIN

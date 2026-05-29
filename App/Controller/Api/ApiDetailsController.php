@@ -1,11 +1,14 @@
 <?php
 
 namespace App\Controller\Api;
+
 use App\Service\CatalogService;
+use App\Response\ApiResponse;
 
 class ApiDetailsController
 {
     private CatalogService $catalogService;
+
     public function __construct(CatalogService $catalogService)
     {
         $this->catalogService = $catalogService;
@@ -13,39 +16,47 @@ class ApiDetailsController
 
     public function show(): void
     {
-        header('Content-Type: application/json');
+        try {
 
-        $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+            $id = filter_input(
+                INPUT_GET,
+                'id',
+                FILTER_VALIDATE_INT
+            );
 
-        if (!$id) {
+            if (!$id) {
 
-            http_response_code(400);
+                ApiResponse::error(
+                    'Invalid ID',
+                    400
+                );
 
-            echo json_encode([
-                'success' => false,
-                'message' => 'Invalid ID'
-            ]);
+                return;
+            }
 
-            return;
+            $item = $this->catalogService->getSingleItem($id);
+
+            if (empty($item)) {
+
+                ApiResponse::error(
+                    'Item not found',
+                    404
+                );
+
+                return;
+            }
+
+            ApiResponse::success(
+                $item,
+                'Item fetched successfully'
+            );
+
+        } catch (\Throwable $e) {
+
+            ApiResponse::error(
+                $e->getMessage(),
+                500
+            );
         }
-
-        $item = $this->catalogService->getSingleItem($id);
-
-        if (empty($item)) {
-
-            http_response_code(404);
-
-            echo json_encode([
-                'success' => false,
-                'message' => 'Item not found'
-            ]);
-
-            return;
-        }
-
-        echo json_encode([
-            'success' => true,
-            'data' => $item
-        ]);
     }
 }

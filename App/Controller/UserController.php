@@ -160,4 +160,4 @@ class UserController extends BaseController
             'section' => ''
         ]);
     }
-}
+}   

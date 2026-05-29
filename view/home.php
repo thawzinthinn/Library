@@ -3,7 +3,7 @@
 use View\ItemView;
 
 require BASE_PATH . '/view/layout/header.php';
-require_once BASE_PATH . '/App/inc/CustomPath.php'; ?>
+// require_once BASE_PATH . '/App/inc/CustomPath.php'; ?>
 
 
 <main class="wrapper">

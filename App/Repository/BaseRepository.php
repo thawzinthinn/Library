@@ -135,9 +135,9 @@ abstract class BaseRepository implements BaseInterface
             return null;
         }
 
-        return $data ?: null;
+        return $this->mapToModel($data);
     }
-    
+
     public function count(array $filters = []): int
     {
         $search = $filters['search'] ?? null;

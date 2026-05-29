@@ -6,16 +6,49 @@ class ErrorHandler
 {
     public static function handle(\Throwable $e): void
     {
-        // You can log later if needed
         error_log($e->getMessage());
 
-        // Store error in session (like Laravel flash)
-        $_SESSION['error'] = self::format($e);
+        // Detect API request
+        $isApi = str_contains($_SERVER['REQUEST_URI'], '/api');
 
+        if ($isApi) {
+            self::handleApi($e);
+            return;
+        }
+
+        self::handleWeb($e);
+    }
+
+    /**
+     * Handle normal MVC web requests
+     */
+    private static function handleWeb(\Throwable $e): void
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        $_SESSION['error'] = self::format($e);
         $_SESSION['old'] = $_POST;
 
-        // Redirect back automatically
         header("Location: " . ($_SERVER['HTTP_REFERER'] ?? '/'));
+        exit;
+    }
+
+    /**
+     * Handle API requests
+     */
+    private static function handleApi(\Throwable $e): void
+    {
+        http_response_code(500);
+
+        header('Content-Type: application/json');
+
+        echo json_encode([
+            'success' => false,
+            'message' => $e->getMessage(),
+        ]);
+
         exit;
     }
 
@@ -23,12 +56,10 @@ class ErrorHandler
     {
         $decoded = json_decode($e->getMessage(), true);
 
-        // validation error (array)
         if (is_array($decoded)) {
             return $decoded;
         }
 
-        // normal error
         return [
             'general' => $e->getMessage()
         ];
